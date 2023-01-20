@@ -106,6 +106,7 @@ export default {
   },
   methods: {
     processInput() {
+      let targetFound = false;
       if (this.input) {
         this.outputs.push("> " + this.input)
         this.inputArray = this.input.split(" ");
@@ -140,8 +141,30 @@ export default {
               }
             }
             break;
+            
+          case "hack":
+            if (this.inputArray.length === 1) {
+              this.outputs.push("What would you like to hack? Please specify an IP address.");
+            } else {
+              let ip = this.inputArray[1];
+              let target = this.targets.find(target => target.ipAddress === ip);
+              if (target) {
+                let attackRoll = Math.floor(Math.random() * 6) + 5;
+                if (attackRoll - 4 > target.defense) {
+                  this.outputs.push("You have successfully hacked " + target.name + "!");
+                  let utilities = target.utilities.join(", ");
+                  this.outputs.push("Available utilities: " + utilities);
+                } else {
+                  this.outputs.push("Your hack attempt was unsuccessful.");
+                }
+              } else {
+                this.outputs.push("Invalid IP address. Please specify a valid IP address for a target.");
+              }
+            }
+            break;
+
           case "mark":
-            let targetMarked = false;
+            targetMarked = false;
             for (let i = 0; i < this.targets.length; i++) {
               if (this.inputArray[1] === this.targets[i].name) {
                 targetMarked = true;
@@ -157,7 +180,7 @@ export default {
             this.outputs = []
             break;
           case "hack":
-            let targetFound = false;
+            targetFound = false;
             for (let i = 0; i < this.targets.length; i++) {
               if (this.inputArray[1] === this.targets[i].name) {
                 targetFound = true;

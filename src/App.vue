@@ -3,7 +3,7 @@
 
 <template>
   <div class="terminal">
-    <div class="terminal-body">
+    <div class="terminal-body" ref="terminalBody">
       <div v-for="(output, index) in outputs" v-bind:key="index" class="terminal-output">{{ output }}</div>
     </div>
     <div class="terminal-input-container">
@@ -11,35 +11,69 @@
       <input v-model="input" @keyup.enter="processInput" class="terminal-input" placeholder="Enter command here">
     </div>
   </div>
-</template>
 
+  <div class="graphicalui">
+    <canvas id="grid" width="100%" height="100%"></canvas>
+  </div>
+
+
+</template>
 <style scoped>
-.terminal {
-  /* set the background to black */
+#canvas {
   background-color: black;
-  /* make the terminal take up the full screen */
-  height: 100vh;
-  width: 100vw;
-  /* set padding for the terminal */
-  padding: 20px;
-  /* use grid layout for the terminal body */
-  display: grid;
-  grid-template-rows: 1fr;
 }
 
-/* make the text bigger */
+.graphicalui {
+  background-color: black;
+  height: 98%;
+  width: 47%;
+  overflow: hidden;
+  position: fixed;
+  left: 53%;
+  bottom: 10px;
+  box-sizing: border-box;
+  border: 2px solid #39ff14;
+}
+
+#grid {
+  width: 100%;
+  height: 100%;
+  border: 1px solid green;
+}
+
+.terminal {
+  background-color: black;
+  height: 98%;
+  width: 50%;
+  /* take up 1/2 of the screen's width */
+  padding: 20px;
+  overflow: hidden;
+  position: fixed;
+  left: 2%;
+  /* position to the left of the screen */
+  bottom: 10px;
+  box-sizing: border-box;
+  border: 2px solid #39ff14;
+}
+
+.terminal-body {
+  overflow-y: scroll;
+  /* added to make the output scrollable */
+  height: calc(100% - 40px);
+  /* adjust as desired, 40px is the combined height of the input and prompt */
+}
+
+.terminal-input-container {
+  position: absolute;
+  bottom: 0;
+  /* this sticks the input container to the bottom of the terminal */
+}
+
 .terminal-prompt,
 .terminal-input,
 .terminal-output {
   font-size: 20px;
-  /* set the text color to neon green */
   color: #39ff14;
-}
-
-/* position the input container at the bottom of the terminal body */
-.terminal-input-container {
-  grid-row: 2;
-  padding-top: 10px;
 }
 </style>
 
@@ -104,7 +138,35 @@ export default {
       }
     });
   },
+  mounted() {
+    this.createGrid();
+  },
+  updated() {
+  },
   methods: {
+    createGrid() {
+      this.$nextTick(() => {
+        const canvas = document.getElementById("grid");
+        const ctx = canvas.getContext("2d");
+        const boxSize = 35;
+        const rows = 18;
+        const cols = 18;
+        ctx.canvas.width = canvas.offsetWidth;
+        ctx.canvas.height = canvas.offsetHeight;
+        ctx.fillStyle = "green";
+
+        for (let i = 0; i < rows; i++) {
+          for (let j = 0; j < cols; j++) {
+            ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
+            ctx.strokeRect(j * boxSize, i * boxSize, boxSize, boxSize);
+          }
+        }
+        ctx.strokeStyle = "green";
+      });
+    },
+    scrollToBottom() {
+      this.$refs.terminalBody.scrollTop = this.$refs.terminalBody.scrollHeight
+    },
     processInput() {
       let targetFound = false;
       if (this.input) {
@@ -141,24 +203,32 @@ export default {
               }
             }
             break;
-            
+
           case "hack":
             if (this.inputArray.length === 1) {
-              this.outputs.push("What would you like to hack? Please specify an IP address.");
+              this.outputs.push("Which IP would you like to hack?");
             } else {
-              let ip = this.inputArray[1];
-              let target = this.targets.find(target => target.ipAddress === ip);
-              if (target) {
-                let attackRoll = Math.floor(Math.random() * 6) + 5;
-                if (attackRoll - 4 > target.defense) {
-                  this.outputs.push("You have successfully hacked " + target.name + "!");
-                  let utilities = target.utilities.join(", ");
-                  this.outputs.push("Available utilities: " + utilities);
+              let targetFound = false;
+              let target;
+              let targetIp = this.inputArray[1];
+              for (let i = 0; i < this.targets.length; i++) {
+                if (this.targets[i].ipAddress === targetIp) {
+                  targetFound = true;
+                  target = this.targets[i];
+                  break;
+                }
+              }
+              if (targetFound) {
+                let attack = Math.floor(Math.random() * 10) + 5;
+                let die = Math.floor(Math.random() * 4) + 1;
+                if (attack - die > target.defense) {
+                  this.outputs.push("You have successfully hacked " + target.name);
+                  this.outputs.push("Utilities: " + target.utilities.join(", "));
                 } else {
-                  this.outputs.push("Your hack attempt was unsuccessful.");
+                  this.outputs.push("You failed to hack " + target.name);
                 }
               } else {
-                this.outputs.push("Invalid IP address. Please specify a valid IP address for a target.");
+                this.outputs.push("Invalid IP: " + targetIp);
               }
             }
             break;
@@ -175,26 +245,12 @@ export default {
               this.outputs.push(`Cannot find target ${this.inputArray[1]}`);
             }
             break;
+
           case "exit":
             this.outputs.push("Exiting the Matrix...");
             this.outputs = []
             break;
-          case "hack":
-            targetFound = false;
-            for (let i = 0; i < this.targets.length; i++) {
-              if (this.inputArray[1] === this.targets[i].name) {
-                targetFound = true;
-                if (this.targets[i].defense > this.attack) {
-                  this.outputs.push(`Hack Failed: ${this.targets[i].name} has a defense of ${this.targets[i].defense}`);
-                } else {
-                  this.outputs.push(`Hack Successful: ${this.targets[i].name} has a defense of ${this.targets[i].defense}`);
-                }
-              }
-            }
-            if (!targetFound) {
-              this.outputs.push(`Cannot find target ${this.inputArray[1]}`);
-            }
-            break;
+
           default:
             if (this.input === "ls") {
               let targetList = "";
@@ -209,7 +265,9 @@ export default {
         }
         this.input = "";
       }
+      this.scrollToBottom();
     }
   }
-};
+}
+
 </script>

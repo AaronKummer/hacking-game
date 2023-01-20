@@ -1,0 +1,27 @@
+[
+    {
+        name: "Television",
+        defense: 5,
+        poweredOn: true
+    },
+    {
+        name: "Garage Door",
+        defense: 3,
+        poweredOn: true
+    },
+    {
+        name: "Webcam",
+        defense: 2,
+        poweredOn: true
+    },
+    {
+        name: "Kitchen Light",
+        defense: 1,
+        poweredOn: true
+    },
+    {
+        name: "Gun Safe",
+        defense: 8,
+        poweredOn: false
+    }
+]

@@ -4,19 +4,27 @@
 <template>
   <div class="terminal">
     <div class="terminal-body" ref="terminalBody">
-      <div v-for="(output, index) in outputs" v-bind:key="index" class="terminal-output">{{ output }}</div>
+      <div
+        v-for="(output, index) in outputs"
+        v-bind:key="index"
+        class="terminal-output"
+      >
+        {{ output }}
+      </div>
     </div>
     <div class="terminal-input-container">
       <span class="terminal-prompt">C:\></span>
-      <input v-model="input" @keyup.enter="processInput" class="terminal-input">
+      <input
+        v-model="input"
+        @keyup.enter="processInput"
+        class="terminal-input"
+      />
     </div>
   </div>
 
   <div class="graphicalui">
     <canvas id="grid" width="100%" height="100%"></canvas>
   </div>
-
-
 </template>
 <style scoped>
 #canvas {
@@ -116,6 +124,8 @@
 export default {
   data() {
     return {
+      hood: null,
+      location: "matrix",
       attack: Math.floor(Math.random() * (10 - 5 + 1) + 5),
       inputs: [],
       input: "",
@@ -129,45 +139,70 @@ export default {
           name: "Television",
           defense: 5,
           poweredOn: true,
-          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`,
-          utilities: ["powerOn()", "powerOff()", "changeChannel(channel:number)", "changeVolume(volume:number)"]
+          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(
+            Math.random() * 256
+          )}`,
+          utilities: [
+            "powerOn()",
+            "powerOff()",
+            "changeChannel(channel:number)",
+            "changeVolume(volume:number)",
+          ],
         },
         {
           name: "Garage Door",
           defense: 3,
           poweredOn: true,
-          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`,
-          utilities: ["openDoor()", "closeDoor()"]
+          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(
+            Math.random() * 256
+          )}`,
+          utilities: ["openDoor()", "closeDoor()"],
         },
         {
           name: "Webcam",
           defense: 2,
           poweredOn: true,
-          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`,
-          utilities: ["startStreaming()", "stopStreaming()", "changeResolution(resolution:string)"]
+          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(
+            Math.random() * 256
+          )}`,
+          utilities: [
+            "startStreaming()",
+            "stopStreaming()",
+            "changeResolution(resolution:string)",
+          ],
         },
         {
           name: "Kitchen Light",
           defense: 1,
           poweredOn: true,
-          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`,
-          utilities: ["lightOn()", "lightOff()", "changeBrightness(brightness:number)"]
+          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(
+            Math.random() * 256
+          )}`,
+          utilities: [
+            "lightOn()",
+            "lightOff()",
+            "changeBrightness(brightness:number)",
+          ],
         },
         {
           name: "Gun Safe",
           defense: 8,
           poweredOn: false,
-          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`,
-          utilities: ["unlock()", "lock()", "changeCode(code:string)"]
-        }
-      ]
+          ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(
+            Math.random() * 256
+          )}`,
+          utilities: ["unlock()", "lock()", "changeCode(code:string)"],
+        },
+      ],
     };
   },
   created() {
     this.outputs.push("Welcome to the matrix");
-    this.outputs.push("Try issuing some commands such as " + this.keywords.join(", "));
+    this.outputs.push(
+      "Try issuing some commands such as " + this.keywords.join(", ")
+    );
     this.outputs.push("");
-    document.addEventListener("keyup", event => {
+    document.addEventListener("keyup", (event) => {
       if (event.code === "Enter") {
         this.processInput();
       }
@@ -175,10 +210,71 @@ export default {
   },
   mounted() {
     this.createGrid();
+    this.createHood();
   },
-  updated() {
-  },
+  updated() {},
   methods: {
+    createHood() {
+      // Initialize hood as a 2D array of objects with type "filler"
+      this.hood = new Array(18);
+      for (let i = 0; i < 18; i++) {
+        this.hood[i] = new Array(18);
+        for (let j = 0; j < 18; j++) {
+          this.hood[i][j] = { type: "filler" };
+        }
+      }
+
+      // Pick random axis for street
+      let xAxis = Math.floor(Math.random() * 18);
+      let yAxis = Math.floor(Math.random() * 18);
+      // Label cells on chosen axis as "street"
+      for (let i = 0; i < 18; i++) {
+        this.hood[xAxis][i].type = "street";
+        this.hood[i][yAxis].type = "street";
+      }
+
+      // Label cells adjacent to street cells as "residential" or "industrial"
+      for (let i = 0; i < 18; i++) {
+        for (let j = 0; j < 18; j++) {
+          if (this.hood[i][j].type === "filler") {
+            if (
+              (i === xAxis - 1 ||
+                i === xAxis + 1 ||
+                j === yAxis - 1 ||
+                j === yAxis + 1) &&
+              Math.random() < 0.875
+            ) {
+              this.hood[i][j].type = "residential";
+              this.hood[i][j].ipAddress =
+                Math.floor(Math.random() * 256) +
+                "." +
+                Math.floor(Math.random() * 256) +
+                "." +
+                Math.floor(Math.random() * 256) +
+                "." +
+                Math.floor(Math.random() * 256);
+            } else if (
+              (i === xAxis - 1 ||
+                i === xAxis + 1 ||
+                j === yAxis - 1 ||
+                j === yAxis + 1) &&
+              Math.random() >= 0.875
+            ) {
+              this.hood[i][j].type = "industrial";
+              this.hood[i][j].ipAddress =
+                Math.floor(Math.random() * 256) +
+                "." +
+                Math.floor(Math.random() * 256) +
+                "." +
+                Math.floor(Math.random() * 256) +
+                "." +
+                Math.floor(Math.random() * 256);
+            }
+          }
+        }
+      }
+    },
+
     createGrid() {
       this.$nextTick(() => {
         const canvas = document.getElementById("grid");
@@ -188,36 +284,35 @@ export default {
         const cols = 18;
         ctx.canvas.width = canvas.offsetWidth;
         ctx.canvas.height = canvas.offsetHeight;
-        ctx.fillStyle = "green";
-
-        // randomly select 1-3 rows and 1-3 columns to not have boxes drawn on
-        const emptyRows = new Set();
-        const emptyCols = new Set();
-        while (emptyRows.size < Math.floor(Math.random() * 3) + 1) {
-          emptyRows.add(Math.floor(Math.random() * rows));
-        }
-        while (emptyCols.size < Math.floor(Math.random() * 3) + 1) {
-          emptyCols.add(Math.floor(Math.random() * cols));
-        }
 
         for (let i = 0; i < rows; i++) {
           for (let j = 0; j < cols; j++) {
-            if (!emptyRows.has(i) && !emptyCols.has(j)) {
-              ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
+            if (this.hood[i][j].type === "filler") {
+              ctx.strokeStyle = "green";
               ctx.strokeRect(j * boxSize, i * boxSize, boxSize, boxSize);
+            } else if (this.hood[i][j].type === "residential") {
+              ctx.fillStyle = "green";
+              ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
+            } else if (this.hood[i][j].type === "industrial") {
+              ctx.fillStyle = "#9ACD32";
+              ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
+            } else {
+              ctx.fillStyle = "black";
+              ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
             }
+            ctx.strokeStyle = "black";
+            ctx.strokeRect(j * boxSize, i * boxSize, boxSize, boxSize);
           }
         }
-        ctx.strokeStyle = "green";
       });
     },
     scrollToBottom() {
-      this.$refs.terminalBody.scrollTop = this.$refs.terminalBody.scrollHeight
+      this.$refs.terminalBody.scrollTop = this.$refs.terminalBody.scrollHeight;
     },
     processInput() {
       let targetFound = false;
       if (this.input) {
-        this.outputs.push("> " + this.input)
+        this.outputs.push("> " + this.input);
         this.inputArray = this.input.split(" ");
 
         // message += ".";
@@ -228,17 +323,43 @@ export default {
           case "ping":
             if (this.inputArray.length === 1) {
               this.outputs.push("What would you like to ping?");
+            } else if (this.location === "matrix") {
+              let targetIp = this.inputArray.slice(1).join(" ");
+              let target;
+              for (let i = 0; i < this.hood.length; i++) {
+                for (let j = 0; j < this.hood[i].length; j++) {
+                  if (
+                    this.hood[i][j].type === "residential" ||
+                    this.hood[i][j].type === "industrial"
+                  ) {
+                    if (this.hood[i][j].ipAddress === targetIp) {
+                      target = this.hood[i][j];
+                      break;
+                    }
+                  }
+                }
+              }
+              if (target) {
+                this.outputs.push("hit");
+              } else {
+                this.outputs.push("Invalid IP address: " + targetIp);
+              }
             } else {
               let targetName = this.inputArray.slice(1).join(" ").toLowerCase();
-              let target = this.targets.find(t => targetName === t.name.toLowerCase());
+              let target = this.targets.find(
+                (t) => targetName === t.name.toLowerCase()
+              );
               if (target) {
-                let jsonString = JSON.stringify(target, function (key, value) {
-                  if (key === 'utilities') {
-                    return undefined;
-                  }
-                  return value;
-                });
-                jsonString = jsonString.replace(/{/g, '{\n').replace(/}/g, '\n}').replace(/,/g, ',\n').replace(/":"/g, '": ');
+                let jsonString = JSON.stringify(
+                  target,
+                  function (key, value) {
+                    if (key === "utilities") {
+                      return undefined;
+                    }
+                    return value;
+                  },
+                  4
+                );
                 this.outputs.push("Processing.");
                 setTimeout(() => {
                   this.$nextTick(() => {
@@ -269,8 +390,12 @@ export default {
                 let attack = Math.floor(Math.random() * 10) + 5;
                 let die = Math.floor(Math.random() * 4) + 1;
                 if (attack - die > target.defense) {
-                  this.outputs.push("You have successfully hacked " + target.name);
-                  this.outputs.push("Utilities: " + target.utilities.join(", "));
+                  this.outputs.push(
+                    "You have successfully hacked " + target.name
+                  );
+                  this.outputs.push(
+                    "Utilities: " + target.utilities.join(", ")
+                  );
                 } else {
                   this.outputs.push("You failed to hack " + target.name);
                 }
@@ -295,26 +420,36 @@ export default {
 
           case "exit":
             this.outputs.push("Exiting the Matrix...");
-            this.outputs = []
+            this.outputs = [];
             break;
-
-          default:
-            if (this.input === "ls") {
-              let targetList = "";
-              for (let i = 0; i < this.targets.length; i++) {
-                targetList += this.targets[i].name + ", ";
-              }
-              this.outputs.push(targetList);
+          case "ls":
+            if (this.location === "matrix") {
+              let hoodCells = this.hood.map((row) =>
+                row.filter(
+                  (cell) =>
+                    cell.type === "residential" || cell.type === "industrial"
+                )
+              );
+              let filteredCells = hoodCells.flat();
+              let jsonString = JSON.stringify(
+                filteredCells,
+                function (key, value) {
+                  return value;
+                }
+              );
+              this.outputs.push(jsonString);
             } else {
-              this.outputs.push(`Invalid Command: ${this.input}`);
+              this.outputs.push("Invalid location: " + this.location);
             }
+            break;
+          default:
+            this.outputs.push(`Invalid Command: ${this.input}`);
             break;
         }
         this.input = "";
       }
       this.scrollToBottom();
-    }
-  }
-}
-
+    },
+  },
+};
 </script>

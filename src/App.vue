@@ -8,7 +8,7 @@
     </div>
     <div class="terminal-input-container">
       <span class="terminal-prompt">C:\></span>
-      <input v-model="input" @keyup.enter="processInput" class="terminal-input" placeholder="Enter command here">
+      <input v-model="input" @keyup.enter="processInput" class="terminal-input">
     </div>
   </div>
 
@@ -41,6 +41,10 @@
   border: 1px solid green;
 }
 
+.terminal-body::-webkit-scrollbar {
+  display: none;
+}
+
 .terminal {
   background-color: black;
   height: 98%;
@@ -56,6 +60,29 @@
   border: 2px solid #39ff14;
 }
 
+.terminal-input-container {
+  position: relative;
+  border: none;
+  width: 100%;
+  display: flex;
+}
+
+.terminal-prompt {
+  margin-right: 10px;
+}
+
+.terminal-input {
+  border: none;
+  background-color: black;
+  width: 100%;
+  outline: none;
+  flex-grow: 1;
+}
+
+.terminal-body::-webkit-scrollbar {
+  width: 0;
+}
+
 .terminal-body {
   overflow-y: scroll;
   /* added to make the output scrollable */
@@ -69,11 +96,19 @@
   /* this sticks the input container to the bottom of the terminal */
 }
 
+.terminal-input {
+  border: none;
+  background-color: black;
+  width: 100%;
+}
+
 .terminal-prompt,
 .terminal-input,
 .terminal-output {
   font-size: 20px;
   color: #39ff14;
+  white-space: pre-wrap;
+  /* This allows the <br> tags to be recognized */
 }
 </style>
 
@@ -155,10 +190,22 @@ export default {
         ctx.canvas.height = canvas.offsetHeight;
         ctx.fillStyle = "green";
 
+        // randomly select 1-3 rows and 1-3 columns to not have boxes drawn on
+        const emptyRows = new Set();
+        const emptyCols = new Set();
+        while (emptyRows.size < Math.floor(Math.random() * 3) + 1) {
+          emptyRows.add(Math.floor(Math.random() * rows));
+        }
+        while (emptyCols.size < Math.floor(Math.random() * 3) + 1) {
+          emptyCols.add(Math.floor(Math.random() * cols));
+        }
+
         for (let i = 0; i < rows; i++) {
           for (let j = 0; j < cols; j++) {
-            ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
-            ctx.strokeRect(j * boxSize, i * boxSize, boxSize, boxSize);
+            if (!emptyRows.has(i) && !emptyCols.has(j)) {
+              ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
+              ctx.strokeRect(j * boxSize, i * boxSize, boxSize, boxSize);
+            }
           }
         }
         ctx.strokeStyle = "green";
@@ -191,6 +238,7 @@ export default {
                   }
                   return value;
                 });
+                jsonString = jsonString.replace(/{/g, '{\n').replace(/}/g, '\n}').replace(/,/g, ',\n').replace(/":"/g, '": ');
                 this.outputs.push("Processing.");
                 setTimeout(() => {
                   this.$nextTick(() => {
@@ -203,7 +251,6 @@ export default {
               }
             }
             break;
-
           case "hack":
             if (this.inputArray.length === 1) {
               this.outputs.push("Which IP would you like to hack?");
@@ -255,7 +302,7 @@ export default {
             if (this.input === "ls") {
               let targetList = "";
               for (let i = 0; i < this.targets.length; i++) {
-                targetList += this.targets[i].name + " ";
+                targetList += this.targets[i].name + ", ";
               }
               this.outputs.push(targetList);
             } else {

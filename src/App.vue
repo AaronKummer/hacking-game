@@ -4,21 +4,13 @@
 <template>
   <div class="terminal">
     <div class="terminal-body" ref="terminalBody">
-      <div
-        v-for="(output, index) in outputs"
-        v-bind:key="index"
-        class="terminal-output"
-      >
+      <div v-for="(output, index) in outputs" v-bind:key="index" class="terminal-output">
         {{ output }}
       </div>
     </div>
     <div class="terminal-input-container">
       <span class="terminal-prompt">C:\></span>
-      <input
-        v-model="input"
-        @keyup.enter="processInput"
-        class="terminal-input"
-      />
+      <input v-model="input" @keyup.enter="processInput" class="terminal-input" />
     </div>
   </div>
 
@@ -212,8 +204,31 @@ export default {
     this.createGrid();
     this.createHood();
   },
-  updated() {},
+  updated() { },
   methods: {
+    updateCell(updatedCell) {
+      for (let i = 0; i < this.hood.length; i++) {
+        for (let j = 0; j < this.hood[i].length; j++) {
+          if (this.hood[i][j].ipAddress === updatedCell.ipAddress) {
+            this.hood[i][j] = updatedCell;
+            return;
+          }
+        }
+      }
+    },
+    startAnimation() {
+      this.animationId = requestAnimationFrame(() => {
+        // check if any cells in this.hood are hacked
+        let hackedCells = this.hood.flat().filter((cell) => cell.hacked);
+        // update the appearance of the hacked cells on the canvas
+        // ...
+        // call startAnimation again
+        this.startAnimation();
+      });
+    },
+    stopAnimation() {
+      cancelAnimationFrame(this.animationId);
+    },
     createHood() {
       // Initialize hood as a 2D array of objects with type "filler"
       this.hood = new Array(18);
@@ -245,6 +260,9 @@ export default {
               Math.random() < 0.875
             ) {
               this.hood[i][j].type = "residential";
+              this.hood[i][j].hackAttempts = 0;
+              this.hood[i][j].hacked = false;
+              this.hood[i][j].defense = Math.floor(Math.random() * (10 - 0 + 1));
               this.hood[i][j].ipAddress =
                 Math.floor(Math.random() * 256) +
                 "." +
@@ -261,6 +279,9 @@ export default {
               Math.random() >= 0.875
             ) {
               this.hood[i][j].type = "industrial";
+              this.hood[i][j].hackAttempts = 0;
+              this.hood[i][j].hacked = false;
+              this.hood[i][j].defense = Math.floor(Math.random() * (20 - 5 + 1)) + 5;
               this.hood[i][j].ipAddress =
                 Math.floor(Math.random() * 256) +
                 "." +
@@ -340,7 +361,7 @@ export default {
                 }
               }
               if (target) {
-                this.outputs.push("hit");
+                this.outputs.push(target)
               } else {
                 this.outputs.push("Invalid IP address: " + targetIp);
               }
@@ -379,25 +400,47 @@ export default {
               let targetFound = false;
               let target;
               let targetIp = this.inputArray[1];
-              for (let i = 0; i < this.targets.length; i++) {
-                if (this.targets[i].ipAddress === targetIp) {
-                  targetFound = true;
-                  target = this.targets[i];
-                  break;
+              if (this.location === "matrix") {
+                for (let i = 0; i < this.hood.length; i++) {
+                  for (let j = 0; j < this.hood[i].length; j++) {
+                    if (
+                      this.hood[i][j].ipAddress === targetIp &&
+                      (this.hood[i][j].type === "industrial" ||
+                        this.hood[i][j].type === "residential")
+                    ) {
+                      targetFound = true;
+                      target = this.hood[i][j];
+                      break;
+                    }
+                  }
+                }
+              } else {
+                for (let i = 0; i < this.targets.length; i++) {
+                  if (this.targets[i].ipAddress === targetIp) {
+                    targetFound = true;
+                    target = this.targets[i];
+                    break;
+                  }
                 }
               }
               if (targetFound) {
+                this.outputs.push("Attempting hack on: " + target.ipAddress);
+                target.hackAttempts += 1
+                this.updateCell(target)
+
                 let attack = Math.floor(Math.random() * 10) + 5;
                 let die = Math.floor(Math.random() * 4) + 1;
                 if (attack - die > target.defense) {
-                  this.outputs.push(
-                    "You have successfully hacked " + target.name
-                  );
-                  this.outputs.push(
-                    "Utilities: " + target.utilities.join(", ")
-                  );
+                  this.outputs.push("You have successfully hacked " + target.ipAddress);
+                  if (this.location !== "matrix") {
+                    this.outputs.push("Utilities: " + target.utilities.join(", "));
+                  } else {
+                    target.hacked = true
+                    this.updateCell(target)
+                    this.startAnimation()
+                  }
                 } else {
-                  this.outputs.push("You failed to hack " + target.name);
+                  this.outputs.push("You failed to hack " + target.ipAddress);
                 }
               } else {
                 this.outputs.push("Invalid IP: " + targetIp);
@@ -429,20 +472,22 @@ export default {
                   (cell) =>
                     cell.type === "residential" || cell.type === "industrial"
                 )
-              );
-              let filteredCells = hoodCells.flat();
+              ).flat();
               let jsonString = JSON.stringify(
-                filteredCells,
+                hoodCells,
                 function (key, value) {
+                  if (key === "defense") {
+                    return undefined;
+                  }
                   return value;
-                }
+                },
+                4
               );
               this.outputs.push(jsonString);
             } else {
               this.outputs.push("Invalid location: " + this.location);
             }
             break;
-          default:
             this.outputs.push(`Invalid Command: ${this.input}`);
             break;
         }

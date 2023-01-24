@@ -116,6 +116,7 @@
 export default {
   data() {
     return {
+      animationId: null,
       hood: null,
       location: "matrix",
       attack: Math.floor(Math.random() * (10 - 5 + 1) + 5),
@@ -216,16 +217,32 @@ export default {
         }
       }
     },
-    startAnimation() {
-      this.animationId = requestAnimationFrame(() => {
-        // check if any cells in this.hood are hacked
-        let hackedCells = this.hood.flat().filter((cell) => cell.hacked);
-        // update the appearance of the hacked cells on the canvas
-        // ...
-        // call startAnimation again
-        this.startAnimation();
+    drawHood() {
+      let canvas = document.getElementById("grid");
+      let ctx = canvas.getContext("2d");
+
+      this.hood.forEach((row, x) => {
+        row.forEach((cell, y) => {
+          ctx.fillStyle = cell.fillStyle;
+          ctx.strokeStyle = cell.strokeStyle;
+          ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+          ctx.strokeRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+        });
       });
     },
+    startAnimation() {
+      let hackedCells = this.hood.filter((cell) => cell.hacked);
+      console.log(hackedCells)
+      let animate = () => {
+        hackedCells.forEach((cell) => {
+          cell.fillStyle = cell.fillStyle === "neonGreen" ? "white" : "neonGreen";
+        });
+        this.drawHood();
+        this.animationId = requestAnimationFrame(animate);
+      }
+      this.animationId = setInterval(animate, 100);
+    },
+
     stopAnimation() {
       cancelAnimationFrame(this.animationId);
     },

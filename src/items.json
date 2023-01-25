@@ -1,0 +1,77 @@
+{
+  "findable-items": [
+    {
+      "name": "cyber-deck + 2",
+      "attack": 15,
+      "price": 2500,
+      "description": "next level deck with advanced hacking capabilities",
+      "functions": ["port-scan", "packet-sniff", "spoof-ip"],
+      "ice-armor": 10
+    },
+    {
+      "name": "cyber-deck + 3",
+      "attack": 20,
+      "price": 5000,
+      "description": "top-of-the-line deck with the latest hacking technology",
+      "functions": ["arp-poison", "ddos", "root-access"],
+      "ice-armor": 15
+    },
+    {
+          "name": "paladin-deck",
+          "ability": "scan-evil",
+          "attack" : "15",
+          "defense" : "30",
+          "price" : "150500"
+        },
+    {
+      "name": "neural-net-mask",
+      "defense": 15,
+      "price": 3500,
+      "description": "wearable device that hides your brainwaves from cyber attacks",
+      "physical-armor": 5,
+      "functions": ["activate", "deactivate"]
+    },
+    {
+      "name": "scanner",
+      "attack": 5,
+      "price": 1000,
+      "description": "small, handheld device that can scan for nearby networks and devices",
+      "functions": ["scan", "locate"]
+    },
+    {
+      "name": "shadow-runner-boots",
+      "defense": 10,
+      "price": 2000,
+      "description": "boots with built-in shock-absorbers for enhanced mobility and defense",
+      "physical-armor": 10
+    },
+    {
+      "name": "smoke-grenade",
+      "attack": 10,
+      "price": 750,
+      "description": "disorients enemies with thick smoke, allowing for a quick escape",
+      "functions": ["activate"]
+    },
+    {
+      "name": "sonic-screwdriver",
+      "attack": 5,
+      "price": 1500,
+      "description": "handheld device that emits high-frequency sound waves to break locks and other mechanical devices",
+      "functions": ["unlock", "jam"]
+    },
+    {
+      "name": "thermal-cloak",
+      "defense": 15,
+      "price": 4000,
+      "description": "cloak that uses advanced technology to hide the wearer's heat signature",
+      "functions": ["activate", "deactivate"]
+    },
+    {
+      "name": "viral-injector",
+      "attack": 20,
+      "price": 6000,
+      "description": "injects a powerful virus into a target device, allowing for complete control",
+      "functions": ["inject"]
+    }
+  ]
+}

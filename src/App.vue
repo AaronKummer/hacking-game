@@ -16,16 +16,11 @@
   <div id="grid" class="graphicalui">
     <div v-if="location == 'matrix'" class="grid-container">
       <div v-for="(row, rowIndex) in hood" :key="rowIndex" class="grid-row">
-        <div
-          v-for="(cell, cellIndex) in row"
-          :key="cellIndex"
-          :class="{
-            glow: cell.hacked,
-            street: cell.type == 'street',
-            residential: cell.type == 'residential',
-          }"
-          class="grid-cell"
-        >
+        <div v-for="(cell, cellIndex) in row" :key="cellIndex" :class="{
+          glow: cell.hacked,
+          street: cell.type == 'street',
+          residential: cell.type == 'residential',
+        }" class="grid-cell">
           <div v-if="cell.type == 'residential'" class="residential-tag">R</div>
           <div v-if="cell.type == 'industrial'" class="industrial-tag">I</div>
         </div>
@@ -181,6 +176,7 @@
 </style>
 
 <script>
+import items from './items.json'
 export default {
   data() {
     return {
@@ -194,11 +190,15 @@ export default {
       player: {
         attack: 10,
         money: 500,
+        deck: 'cyber-deck +1',
+        items: [],
+        data: []
       },
       processing: false,
       inputArray: [],
       keywords: ["ping", "mark", "exit", "hack", "ls", "shop", "help", "loc"],
       advancedKeywords: ["enter", "change", "buy", "sell"],
+      shopItems: items['findable-items'],
       targets: [
         {
           name: "Television",
@@ -255,8 +255,10 @@ export default {
           utilities: ["unlock()", "lock()", "changeCode(code:string)"],
         },
       ],
+      items: null
     };
   },
+
   created() {
     this.outputs.push("Welcome to the matrix");
     this.outputs.push("Try issuing some commands such as " + this.keywords.join(", "));
@@ -271,7 +273,7 @@ export default {
     this.createHood();
     console.log(this.hood);
   },
-  updated() {},
+  updated() { },
   methods: {
     createHood() {
       // Initialize hood as a 2D array of objects with type "filler"
@@ -494,7 +496,19 @@ export default {
               this.outputs.push(`Cannot find target ${this.inputArray[1]}`);
             }
             break;
-
+          case "shop":
+            if (this.location == "matrix") {
+              this.shopItems.forEach((item) => {
+                let itemString = JSON.stringify(item, null, 2);
+                this.outputs.push(itemString);
+              });
+              this.outputs.push("\n")
+              this.outputs.push('if you have the cash and want to buy something then type "buy" followed by the item name')
+            } else {
+              this.outputs.push("\n")
+              this.outputs.push("You don't want to shop while in the middle of a hack...")
+            }
+            break;
           case "exit":
             if (this.location != "matrix") {
               this.location = "matrix";

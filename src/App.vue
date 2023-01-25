@@ -26,8 +26,11 @@
         </div>
       </div>
     </div>
-    <div v-if="location != 'matrix'">
+    <div v-if="location != 'matrix' && location != 'hacker-shop'">
       <img src="../house.png" class="house-img" alt="" />
+    </div>
+    <div v-if="location == 'hacker-shop'">
+      <img src="../hacker-shop1.png" class="house-img" alt="" />
     </div>
   </div>
 </template>
@@ -176,7 +179,7 @@
 </style>
 
 <script>
-import items from './items.json'
+import items from "./items.json";
 export default {
   data() {
     return {
@@ -186,19 +189,20 @@ export default {
       attack: Math.floor(Math.random() * (10 - 5 + 1) + 5),
       inputs: [],
       input: "",
+      inputIndex: -1,
       outputs: [],
       player: {
         attack: 10,
         money: 500,
-        deck: 'cyber-deck +1',
+        deck: "cyber-deck +1",
         items: [],
-        data: []
+        data: [],
       },
       processing: false,
       inputArray: [],
       keywords: ["ping", "mark", "exit", "hack", "ls", "shop", "help", "loc"],
       advancedKeywords: ["enter", "change", "buy", "sell"],
-      shopItems: items['findable-items'],
+      shopItems: items["findable-items"],
       targets: [
         {
           name: "Television",
@@ -255,17 +259,55 @@ export default {
           utilities: ["unlock()", "lock()", "changeCode(code:string)"],
         },
       ],
-      items: null
+      items: items,
     };
   },
 
   created() {
     this.outputs.push("Welcome to the matrix");
+    this.outputs.push("\n");
     this.outputs.push("Try issuing some commands such as " + this.keywords.join(", "));
-    this.outputs.push("");
+    this.outputs.push("\n");
+    this.outputs.push("You can also use ctrl+ up or down arrow to scroll through the terminal window.");
     document.addEventListener("keyup", (event) => {
       if (event.code === "Enter") {
         this.processInput();
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.ctrlKey && event.code === "ArrowUp") {
+        document.querySelector(".terminal-body").scrollBy(0, -50);
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.ctrlKey && event.code === "ArrowDown") {
+        document.querySelector(".terminal-body").scrollBy(0, 50);
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (!event.ctrlKey && event.code === "ArrowUp") {
+        if (this.inputIndex === -1) {
+          this.inputIndex = this.inputs.length - 1;
+        } else {
+          this.inputIndex--;
+          if (this.inputIndex < 0) {
+            this.inputIndex = this.inputs.length - 1;
+          }
+        }
+        this.input = this.inputs[this.inputIndex];
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (!event.ctrlKey && event.code === "ArrowDown") {
+        if (this.inputIndex === -1) {
+          this.inputIndex = 0;
+        } else {
+          this.inputIndex++;
+          if (this.inputIndex >= this.inputs.length) {
+            this.inputIndex = 0;
+          }
+        }
+        this.input = this.inputs[this.inputIndex];
       }
     });
   },
@@ -354,10 +396,12 @@ export default {
     },
     processInput() {
       if (this.input) {
+        this.inputs.push(this.input)
+        console.log(this.inputs)
         this.outputs.push("> " + this.input);
         this.inputArray = this.input.split(" ");
-
         this.processing = false;
+        this.inputIndex = -1;
         switch (this.inputArray[0]) {
           case "enter":
             if (this.location == "matrix") {
@@ -498,15 +542,16 @@ export default {
             break;
           case "shop":
             if (this.location == "matrix") {
-              this.shopItems.forEach((item) => {
-                let itemString = JSON.stringify(item, null, 2);
-                this.outputs.push(itemString);
-              });
-              this.outputs.push("\n")
-              this.outputs.push('if you have the cash and want to buy something then type "buy" followed by the item name')
+              this.location = 'hacker-shop'
+
+              this.outputs.push(
+                'if you have the cash and want to buy something then type "buy" followed by the item name'
+              );
             } else {
-              this.outputs.push("\n")
-              this.outputs.push("You don't want to shop while in the middle of a hack...")
+              this.outputs.push("\n");
+              this.outputs.push(
+                "You don't want to shop while in the middle of a hack..."
+              );
             }
             break;
           case "exit":
@@ -537,11 +582,15 @@ export default {
                 4
               );
               this.outputs.push(jsonString);
-            } else {
-              this.outputs.push("Invalid location: " + this.location);
             }
-            break;
-            this.outputs.push(`Invalid Command: ${this.input}`);
+            if (this.location == 'hacker-shop') {
+              this.items["findable-items"].forEach((item) => {
+                let itemString = JSON.stringify(item, null, 2);
+                this.outputs.push(itemString);
+              });
+              this.outputs.push("\n");
+
+            }
             break;
         }
         this.input = "";

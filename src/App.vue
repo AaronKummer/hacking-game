@@ -14,15 +14,11 @@
     </div>
   </div>
 
-  <div class="graphicalui">
-    <canvas id="grid" width="100%" height="100%"></canvas>
+  <div id="grid" class="graphicalui">
+
   </div>
 </template>
 <style scoped>
-#canvas {
-  background-color: black;
-}
-
 .graphicalui {
   background-color: black;
   height: 98%;
@@ -35,10 +31,21 @@
   border: 2px solid #39ff14;
 }
 
-#grid {
-  width: 100%;
-  height: 100%;
-  border: 1px solid green;
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px white;
+  }
+
+  to {
+    box-shadow: 0 0 20px white;
+  }
+}
+
+.glow {
+  animation: glow 1s ease-in-out infinite alternate;
+  background-color: transparent;
+  animation-play-state: running;
+  z-index: 99999;
 }
 
 .terminal-body::-webkit-scrollbar {
@@ -202,50 +209,12 @@ export default {
     });
   },
   mounted() {
-    this.createGrid();
     this.createHood();
+    console.log(this.hood)
+    this.createGrid()
   },
   updated() { },
   methods: {
-    updateCell(updatedCell) {
-      for (let i = 0; i < this.hood.length; i++) {
-        for (let j = 0; j < this.hood[i].length; j++) {
-          if (this.hood[i][j].ipAddress === updatedCell.ipAddress) {
-            this.hood[i][j] = updatedCell;
-            return;
-          }
-        }
-      }
-    },
-    drawHood() {
-      let canvas = document.getElementById("grid");
-      let ctx = canvas.getContext("2d");
-
-      this.hood.forEach((row, x) => {
-        row.forEach((cell, y) => {
-          ctx.fillStyle = cell.fillStyle;
-          ctx.strokeStyle = cell.strokeStyle;
-          ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-          ctx.strokeRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-        });
-      });
-    },
-    startAnimation() {
-      let hackedCells = this.hood.filter((cell) => cell.hacked);
-      console.log(hackedCells)
-      let animate = () => {
-        hackedCells.forEach((cell) => {
-          cell.fillStyle = cell.fillStyle === "neonGreen" ? "white" : "neonGreen";
-        });
-        this.drawHood();
-        this.animationId = requestAnimationFrame(animate);
-      }
-      this.animationId = setInterval(animate, 100);
-    },
-
-    stopAnimation() {
-      cancelAnimationFrame(this.animationId);
-    },
     createHood() {
       // Initialize hood as a 2D array of objects with type "filler"
       this.hood = new Array(18);
@@ -255,7 +224,6 @@ export default {
           this.hood[i][j] = { type: "filler" };
         }
       }
-
       // Pick random axis for street
       let xAxis = Math.floor(Math.random() * 18);
       let yAxis = Math.floor(Math.random() * 18);
@@ -264,7 +232,6 @@ export default {
         this.hood[xAxis][i].type = "street";
         this.hood[i][yAxis].type = "street";
       }
-
       // Label cells adjacent to street cells as "residential" or "industrial"
       for (let i = 0; i < 18; i++) {
         for (let j = 0; j < 18; j++) {
@@ -312,50 +279,87 @@ export default {
         }
       }
     },
-
     createGrid() {
-      this.$nextTick(() => {
-        const canvas = document.getElementById("grid");
-        const ctx = canvas.getContext("2d");
-        const boxSize = 35;
-        const rows = 18;
-        const cols = 18;
-        ctx.canvas.width = canvas.offsetWidth;
-        ctx.canvas.height = canvas.offsetHeight;
+      let grid = document.createElement("div");
+      grid.style.display = "flex";
+      grid.style.flexWrap = "wrap";
+      grid.style.width = "100%";
+      grid.style.height = "100%";
 
-        for (let i = 0; i < rows; i++) {
-          for (let j = 0; j < cols; j++) {
-            if (this.hood[i][j].type === "filler") {
-              ctx.strokeStyle = "green";
-              ctx.strokeRect(j * boxSize, i * boxSize, boxSize, boxSize);
-            } else if (this.hood[i][j].type === "residential") {
-              ctx.fillStyle = "green";
-              ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
-            } else if (this.hood[i][j].type === "industrial") {
-              ctx.fillStyle = "#9ACD32";
-              ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
-            } else {
-              ctx.fillStyle = "black";
-              ctx.fillRect(j * boxSize, i * boxSize, boxSize, boxSize);
-            }
-            ctx.strokeStyle = "black";
-            ctx.strokeRect(j * boxSize, i * boxSize, boxSize, boxSize);
+      for (let i = 0; i < 18; i++) {
+        for (let j = 0; j < 18; j++) {
+          let box = document.createElement("div");
+          box.style.flex = "1 0 auto";
+          box.style.backgroundColor = this.getBoxColor(this.hood[i][j].type);
+          box.style.border = this.getBoxBorder(this.hood[i][j].type);
+          box.id = this.hood[i][j].ipAddress
+          box.style.height = "5.5%";
+          box.style.width = "5.5%";
+          grid.appendChild(box);
+        }
+      }
+
+      document.getElementById("grid").appendChild(grid);
+    },
+    getBoxBorder(type) {
+      switch (type) {
+        case "filler":
+          return "2px solid #39ff14";
+        case "street":
+          return "none";
+        case "residential":
+          return "none";
+        case "industrial":
+          return "none";
+        default:
+          return "black";
+      }
+    },
+
+    getBoxColor(type) {
+      switch (type) {
+        case "filler":
+          return "black";
+        case "street":
+          return "black";
+        case "residential":
+          return "#39ff14";
+        case "industrial":
+          return "yellow";
+        default:
+          return "black";
+      }
+    },
+    glowBox(id) {
+      let element = document.getElementById(id);
+      if (element) {
+        element.style.animation = "glow 1s ease-in-out infinite alternate";
+        element.style.animationPlayState = "running";
+
+      }
+    },
+    updateCell(updatedCell) {
+      for (let i = 0; i < this.hood.length; i++) {
+        for (let j = 0; j < this.hood[i].length; j++) {
+          if (this.hood[i][j].ipAddress === updatedCell.ipAddress) {
+            this.hood[i][j] = updatedCell;
           }
         }
-      });
+      }
+      if (updatedCell.hacked) {
+        this.glowBox(updatedCell.ipAddress)
+      }
+
     },
+
     scrollToBottom() {
       this.$refs.terminalBody.scrollTop = this.$refs.terminalBody.scrollHeight;
     },
     processInput() {
-      let targetFound = false;
       if (this.input) {
         this.outputs.push("> " + this.input);
         this.inputArray = this.input.split(" ");
 
-        // message += ".";
-        // this.outputs.pop();
-        // this.outputs.push("Processing...");
         this.processing = false;
         switch (this.inputArray[0]) {
           case "ping":
@@ -454,7 +458,6 @@ export default {
                   } else {
                     target.hacked = true
                     this.updateCell(target)
-                    this.startAnimation()
                   }
                 } else {
                   this.outputs.push("You failed to hack " + target.ipAddress);

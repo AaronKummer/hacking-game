@@ -15,10 +15,29 @@
   </div>
 
   <div id="grid" class="graphicalui">
-
+    <div v-if="location == 'matrix'" class="grid-container">
+      <div v-for="(row, rowIndex) in hood" :key="rowIndex" class="grid-row">
+        <div v-for="(cell, cellIndex) in row" :key="cellIndex"
+          :class="{ 'glow': cell.hacked, 'street': cell.type == 'street', 'residential': cell.type == 'residential' }"
+          class="grid-cell">
+          <div v-if="cell.type == 'residential'" class="residential-tag"> R</div>
+          <div v-if="cell.type == 'industrial'" class="industrial-tag"> I</div>
+        </div>
+      </div>
+    </div>
+    <div v-if="location != 'matrix'">
+      <img src="../house.png" class="house-img" alt="">
+    </div>
   </div>
 </template>
 <style scoped>
+.house-img {
+  height: 70%;
+  width: 70%;
+  margin-left: 15%;
+  margin-top: 5%;
+}
+
 .graphicalui {
   background-color: black;
   height: 98%;
@@ -31,22 +50,59 @@
   border: 2px solid #39ff14;
 }
 
-@keyframes glow {
-  from {
-    box-shadow: 0 0 5px white;
-  }
+.street {
+  border: none !important;
+}
 
-  to {
-    box-shadow: 0 0 20px white;
-  }
+.residential-tag {
+  margin-left: 35%;
+  margin-top: 10%;
+  color: #39ff14;
+}
+
+.industrial-tag {
+  margin-left: 43%;
+  margin-top: 12%;
+  color: #39ff14;
 }
 
 .glow {
-  animation: glow 1s ease-in-out infinite alternate;
-  background-color: transparent;
+  animation: glow 1s infinite alternate;
   animation-play-state: running;
   z-index: 99999;
 }
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 1px 1px rgb(255, 96, 173);
+  }
+
+  to {
+    box-shadow: 0 0 3px 3px rgb(255, 27, 202);
+  }
+}
+
+.grid-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  height: 5.5%;
+}
+
+.grid-row {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.grid-cell {
+  background-color: black;
+  border: 1px solid #39ff14;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
 
 .terminal-body::-webkit-scrollbar {
   display: none;
@@ -130,10 +186,14 @@ export default {
       inputs: [],
       input: "",
       outputs: [],
-      attack: 10,
+      player: {
+        attack: 10,
+        money: 500,
+      },
       processing: false,
       inputArray: [],
-      keywords: ["ping", "mark", "exit", "hack", "ls"],
+      keywords: ["ping", "mark", "exit", "hack", "ls", "shop", "help", 'loc'],
+      advancedKeywords: ['enter', 'change', 'buy', 'sell'],
       targets: [
         {
           name: "Television",
@@ -211,7 +271,6 @@ export default {
   mounted() {
     this.createHood();
     console.log(this.hood)
-    this.createGrid()
   },
   updated() { },
   methods: {
@@ -279,65 +338,6 @@ export default {
         }
       }
     },
-    createGrid() {
-      let grid = document.createElement("div");
-      grid.style.display = "flex";
-      grid.style.flexWrap = "wrap";
-      grid.style.width = "100%";
-      grid.style.height = "100%";
-
-      for (let i = 0; i < 18; i++) {
-        for (let j = 0; j < 18; j++) {
-          let box = document.createElement("div");
-          box.style.flex = "1 0 auto";
-          box.style.backgroundColor = this.getBoxColor(this.hood[i][j].type);
-          box.style.border = this.getBoxBorder(this.hood[i][j].type);
-          box.id = this.hood[i][j].ipAddress
-          box.style.height = "5.5%";
-          box.style.width = "5.5%";
-          grid.appendChild(box);
-        }
-      }
-
-      document.getElementById("grid").appendChild(grid);
-    },
-    getBoxBorder(type) {
-      switch (type) {
-        case "filler":
-          return "2px solid #39ff14";
-        case "street":
-          return "none";
-        case "residential":
-          return "none";
-        case "industrial":
-          return "none";
-        default:
-          return "black";
-      }
-    },
-
-    getBoxColor(type) {
-      switch (type) {
-        case "filler":
-          return "black";
-        case "street":
-          return "black";
-        case "residential":
-          return "#39ff14";
-        case "industrial":
-          return "yellow";
-        default:
-          return "black";
-      }
-    },
-    glowBox(id) {
-      let element = document.getElementById(id);
-      if (element) {
-        element.style.animation = "glow 1s ease-in-out infinite alternate";
-        element.style.animationPlayState = "running";
-
-      }
-    },
     updateCell(updatedCell) {
       for (let i = 0; i < this.hood.length; i++) {
         for (let j = 0; j < this.hood[i].length; j++) {
@@ -346,10 +346,6 @@ export default {
           }
         }
       }
-      if (updatedCell.hacked) {
-        this.glowBox(updatedCell.ipAddress)
-      }
-
     },
 
     scrollToBottom() {
@@ -362,6 +358,21 @@ export default {
 
         this.processing = false;
         switch (this.inputArray[0]) {
+          case 'enter':
+            if (this.location == 'matrix') {
+              let houseIp = this.inputArray.slice(1).join(' ')
+              let house = this.hood.map(row => row.filter(h => h.ipAddress === houseIp)).flat()[0];
+              console.log(house)
+              if (house) {
+                if (house.hacked) {
+                  this.location = houseIp
+                  this.outputs.push('entering ' + this.location)
+                } else {
+                  this.outputs.push('this house has a firewall, and it is blocking your attempt to enter...')
+                }
+              }
+            }
+            break;
           case "ping":
             if (this.inputArray.length === 1) {
               this.outputs.push("What would you like to ping?");
@@ -467,7 +478,9 @@ export default {
               }
             }
             break;
-
+          case 'loc':
+            this.outputs.push(this.location)
+            break;
           case "mark":
             targetMarked = false;
             for (let i = 0; i < this.targets.length; i++) {
@@ -482,8 +495,12 @@ export default {
             break;
 
           case "exit":
-            this.outputs.push("Exiting the Matrix...");
-            this.outputs = [];
+            if (this.location != 'matrix') {
+              this.location = 'matrix'
+            } else {
+              this.outputs.push("Exiting the Matrix...");
+              this.outputs = [];
+            }
             break;
           case "ls":
             if (this.location === "matrix") {

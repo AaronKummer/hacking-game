@@ -1,5 +1,4 @@
-<script setup>
-</script>
+<script setup></script>
 
 <template>
   <div class="terminal">
@@ -17,16 +16,23 @@
   <div id="grid" class="graphicalui">
     <div v-if="location == 'matrix'" class="grid-container">
       <div v-for="(row, rowIndex) in hood" :key="rowIndex" class="grid-row">
-        <div v-for="(cell, cellIndex) in row" :key="cellIndex"
-          :class="{ 'glow': cell.hacked, 'street': cell.type == 'street', 'residential': cell.type == 'residential' }"
-          class="grid-cell">
-          <div v-if="cell.type == 'residential'" class="residential-tag"> R</div>
-          <div v-if="cell.type == 'industrial'" class="industrial-tag"> I</div>
+        <div
+          v-for="(cell, cellIndex) in row"
+          :key="cellIndex"
+          :class="{
+            glow: cell.hacked,
+            street: cell.type == 'street',
+            residential: cell.type == 'residential',
+          }"
+          class="grid-cell"
+        >
+          <div v-if="cell.type == 'residential'" class="residential-tag">R</div>
+          <div v-if="cell.type == 'industrial'" class="industrial-tag">I</div>
         </div>
       </div>
     </div>
     <div v-if="location != 'matrix'">
-      <img src="../house.png" class="house-img" alt="">
+      <img src="../house.png" class="house-img" alt="" />
     </div>
   </div>
 </template>
@@ -102,7 +108,6 @@
   height: 100%;
   box-sizing: border-box;
 }
-
 
 .terminal-body::-webkit-scrollbar {
   display: none;
@@ -192,8 +197,8 @@ export default {
       },
       processing: false,
       inputArray: [],
-      keywords: ["ping", "mark", "exit", "hack", "ls", "shop", "help", 'loc'],
-      advancedKeywords: ['enter', 'change', 'buy', 'sell'],
+      keywords: ["ping", "mark", "exit", "hack", "ls", "shop", "help", "loc"],
+      advancedKeywords: ["enter", "change", "buy", "sell"],
       targets: [
         {
           name: "Television",
@@ -238,11 +243,7 @@ export default {
           ipAddress: `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(
             Math.random() * 256
           )}`,
-          utilities: [
-            "lightOn()",
-            "lightOff()",
-            "changeBrightness(brightness:number)",
-          ],
+          utilities: ["lightOn()", "lightOff()", "changeBrightness(brightness:number)"],
         },
         {
           name: "Gun Safe",
@@ -258,9 +259,7 @@ export default {
   },
   created() {
     this.outputs.push("Welcome to the matrix");
-    this.outputs.push(
-      "Try issuing some commands such as " + this.keywords.join(", ")
-    );
+    this.outputs.push("Try issuing some commands such as " + this.keywords.join(", "));
     this.outputs.push("");
     document.addEventListener("keyup", (event) => {
       if (event.code === "Enter") {
@@ -270,9 +269,9 @@ export default {
   },
   mounted() {
     this.createHood();
-    console.log(this.hood)
+    console.log(this.hood);
   },
-  updated() { },
+  updated() {},
   methods: {
     createHood() {
       // Initialize hood as a 2D array of objects with type "filler"
@@ -358,17 +357,21 @@ export default {
 
         this.processing = false;
         switch (this.inputArray[0]) {
-          case 'enter':
-            if (this.location == 'matrix') {
-              let houseIp = this.inputArray.slice(1).join(' ')
-              let house = this.hood.map(row => row.filter(h => h.ipAddress === houseIp)).flat()[0];
-              console.log(house)
+          case "enter":
+            if (this.location == "matrix") {
+              let houseIp = this.inputArray.slice(1).join(" ");
+              let house = this.hood
+                .map((row) => row.filter((h) => h.ipAddress === houseIp))
+                .flat()[0];
+              console.log(house);
               if (house) {
                 if (house.hacked) {
-                  this.location = houseIp
-                  this.outputs.push('entering ' + this.location)
+                  this.location = houseIp;
+                  this.outputs.push("entering " + this.location);
                 } else {
-                  this.outputs.push('this house has a firewall, and it is blocking your attempt to enter...')
+                  this.outputs.push(
+                    "this house has a firewall, and it is blocking your attempt to enter..."
+                  );
                 }
               }
             }
@@ -393,15 +396,13 @@ export default {
                 }
               }
               if (target) {
-                this.outputs.push(target)
+                this.outputs.push(target);
               } else {
                 this.outputs.push("Invalid IP address: " + targetIp);
               }
             } else {
               let targetName = this.inputArray.slice(1).join(" ").toLowerCase();
-              let target = this.targets.find(
-                (t) => targetName === t.name.toLowerCase()
-              );
+              let target = this.targets.find((t) => targetName === t.name.toLowerCase());
               if (target) {
                 let jsonString = JSON.stringify(
                   target,
@@ -457,8 +458,8 @@ export default {
               }
               if (targetFound) {
                 this.outputs.push("Attempting hack on: " + target.ipAddress);
-                target.hackAttempts += 1
-                this.updateCell(target)
+                target.hackAttempts += 1;
+                this.updateCell(target);
 
                 let attack = Math.floor(Math.random() * 10) + 5;
                 let die = Math.floor(Math.random() * 4) + 1;
@@ -467,8 +468,8 @@ export default {
                   if (this.location !== "matrix") {
                     this.outputs.push("Utilities: " + target.utilities.join(", "));
                   } else {
-                    target.hacked = true
-                    this.updateCell(target)
+                    target.hacked = true;
+                    this.updateCell(target);
                   }
                 } else {
                   this.outputs.push("You failed to hack " + target.ipAddress);
@@ -478,8 +479,8 @@ export default {
               }
             }
             break;
-          case 'loc':
-            this.outputs.push(this.location)
+          case "loc":
+            this.outputs.push(this.location);
             break;
           case "mark":
             targetMarked = false;
@@ -495,8 +496,8 @@ export default {
             break;
 
           case "exit":
-            if (this.location != 'matrix') {
-              this.location = 'matrix'
+            if (this.location != "matrix") {
+              this.location = "matrix";
             } else {
               this.outputs.push("Exiting the Matrix...");
               this.outputs = [];
@@ -504,12 +505,13 @@ export default {
             break;
           case "ls":
             if (this.location === "matrix") {
-              let hoodCells = this.hood.map((row) =>
-                row.filter(
-                  (cell) =>
-                    cell.type === "residential" || cell.type === "industrial"
+              let hoodCells = this.hood
+                .map((row) =>
+                  row.filter(
+                    (cell) => cell.type === "residential" || cell.type === "industrial"
+                  )
                 )
-              ).flat();
+                .flat();
               let jsonString = JSON.stringify(
                 hoodCells,
                 function (key, value) {

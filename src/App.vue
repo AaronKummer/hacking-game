@@ -403,6 +403,14 @@ export default {
         this.processing = false;
         this.inputIndex = -1;
         switch (this.inputArray[0]) {
+          case "help":
+            if (this.location == "matrix") {
+              this.outputs.push("You're currently in the matrix.")
+              this.outputs.push("Try using a command like ls to list all of the main wifi blocks around you.")
+              this.outputs.push("You can also scan them by typing ping followed by the ip address of a device or block.")
+              this.outputs.push("for a list of all commands you can take in this current location type")
+              this.outputs.push("help --commands")
+            }
           case "enter":
             if (this.location == "matrix") {
               let houseIp = this.inputArray.slice(1).join(" ");
